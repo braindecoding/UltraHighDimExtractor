@@ -23,8 +23,17 @@ import time
 import pickle
 
 from .ultra_extractor import UltraHighDimExtractor
-from ..utils.validation import validate_eeg_data
-from ..utils.metrics import FeatureQualityMetrics
+
+try:
+    from ..utils.validation import validate_eeg_data
+    from ..utils.metrics import FeatureQualityMetrics
+except ImportError:
+    # Handle case when imported directly
+    import sys
+    import os
+    sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+    from utils.validation import validate_eeg_data
+    from utils.metrics import FeatureQualityMetrics
 
 logger = logging.getLogger(__name__)
 

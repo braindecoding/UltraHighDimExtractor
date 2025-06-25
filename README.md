@@ -1,14 +1,14 @@
 # UltraHighDimWaveletExtractor 🚀
 
-**Ultra-High Dimensional Wavelet Feature Extraction for EEG-to-Image Reconstruction**
+**Ultra-High Dimensional Wavelet Feature Extraction for Preprocessed EEG Data**
 
-This package provides state-of-the-art wavelet feature extraction specifically designed for EEG-based image reconstruction tasks, achieving **40,418+ features** that exceed fMRI visual cortex dimensionality.
+This package provides state-of-the-art wavelet feature extraction specifically designed for EEG-based image reconstruction tasks, achieving **35,672+ features** from preprocessed EEG data that exceed fMRI visual cortex dimensionality.
 
 ## 🎯 Key Features
 
-- **🧠 Ultra-High Dimensionality**: 40,418+ features (224% of fMRI visual cortex)
-- **🔬 Advanced Preprocessing**: Optimized for image reconstruction tasks
-- **⚡ Multiple Wavelet Families**: db8, db10, coif5, bior4.4, sym8
+- **🧠 Ultra-High Dimensionality**: 35,672+ features (exceeds fMRI visual cortex)
+- **🔬 Preprocessed Data Ready**: Works with clean, filtered EEG data
+- **⚡ Multiple Wavelet Families**: db4, db8, coif3, bior4.4, and more
 - **🌳 Hybrid DWT+WPD**: Best of both wavelet approaches
 - **🎨 Image Reconstruction Ready**: Designed for visual cortex competition
 - **📊 Production Ready**: Robust, scalable, and well-tested
@@ -24,10 +24,10 @@ eeg_data.shape = (100, 14, 128)
 **Output**: 2D Feature Matrix `(n_samples, n_features)`
 ```python
 # Ultra-high dimensional features
-features.shape = (100, 40418)
+features.shape = (100, 35672)
 ```
 
-**Transformation**: Each EEG trial → 40,418+ wavelet features
+**Transformation**: Each EEG trial → 35,672+ wavelet features
 
 ## �📦 Package Structure
 
@@ -40,29 +40,26 @@ UltraHighDimWaveletExtractor/
 ├── core/                        # Core modules
 │   ├── __init__.py
 │   ├── base.py                  # Base classes
-│   ├── preprocessing.py         # EEG preprocessing
+│   ├── wavelet_base.py         # Wavelet feature base classes
 │   ├── dwt_extractor.py        # DWT feature extraction
 │   ├── wpd_extractor.py        # WPD feature extraction
-│   └── ultra_extractor.py      # Main ultra-high dim extractor
+│   ├── ultra_extractor.py      # Main ultra-high dim extractor
+│   └── pipeline.py             # Feature extraction pipeline
 ├── utils/                       # Utility functions
 │   ├── __init__.py
 │   ├── validation.py           # Data validation
-│   ├── visualization.py        # Feature visualization
 │   └── metrics.py              # Quality metrics
 ├── examples/                    # Usage examples
 │   ├── __init__.py
 │   ├── basic_usage.py          # Basic example
-│   ├── image_reconstruction.py # Image reconstruction example
-│   └── preprocessing_demo.py   # Preprocessing demonstration
+│   ├── image_reconstruction_example.py # Image reconstruction example
+│   └── benchmark_performance.py # Performance benchmarking
 ├── tests/                       # Unit tests
-│   ├── __init__.py
-│   ├── test_preprocessing.py
-│   ├── test_extractors.py
-│   └── test_integration.py
+│   └── __init__.py
 └── docs/                        # Documentation
-    ├── api_reference.md
-    ├── user_guide.md
-    └── performance_benchmarks.md
+    ├── API_REFERENCE.md
+    ├── USAGE_GUIDE.md
+    └── DATA_FORMAT_SPECIFICATION.md
 ```
 
 ## ⚠️ Important: Preprocessing Required
@@ -100,51 +97,55 @@ print(f"Input EEG shape: {eeg_data.shape}")
 validated_data = validate_eeg_data(eeg_data)
 
 # 2. Extract ultra-high dimensional features
-extractor = UltraHighDimExtractor(target_dimensions=40000)
+extractor = UltraHighDimExtractor(target_dimensions=35000)
 features = extractor.fit_transform(validated_data)
 
-print(f"Output features shape: {features.shape}")  # (100, 40418+)
+print(f"Output features shape: {features.shape}")  # (100, 35672+)
 print(f"Extracted {features.shape[1]:,} features per sample!")
 ```
 
 **Expected Output**:
 ```
 Input EEG shape: (100, 14, 128)
-Output features shape: (100, 40418)
-Extracted 40,418 features per sample!
+Output features shape: (100, 35672)
+Extracted 35,672 features per sample!
 ```
 
 ### Image Reconstruction Pipeline
 
 ```python
-from UltraHighDimWaveletExtractor import ImageReconstructionPipeline
+from core.pipeline import ImageReconstructionPipeline
+from utils.validation import validate_eeg_data
 
-# Complete pipeline
-pipeline = ImageReconstructionPipeline()
-features = pipeline.extract_features(raw_eeg_data)
+# Complete pipeline for preprocessed data
+pipeline = ImageReconstructionPipeline(target_dimensions=35000)
 
-# Train reconstruction model
-pipeline.train_reconstruction_model(features, images)
+# Extract features from preprocessed EEG
+preprocessed_eeg = validate_eeg_data(your_preprocessed_eeg_data)
+features = pipeline.extract_features(preprocessed_eeg)
 
-# Reconstruct images from new EEG
-reconstructed_images = pipeline.reconstruct_images(new_eeg_data)
+# Train reconstruction model (if you have target images)
+# pipeline.train_reconstruction_model(features, images)
+
+# Extract features from new preprocessed EEG
+new_features = pipeline.extract_features(new_preprocessed_eeg)
 ```
 
 ## 📊 Performance Benchmarks
 
-| Method | Features | Time (50 samples) | fMRI Comparison |
+| Method | Features | Time (10 samples) | fMRI Comparison |
 |--------|----------|-------------------|-----------------|
-| **UltraHighDim** | **40,418** | **51.6s** | **224%** ✅ |
-| Deep WPD | 8,120 | 15.2s | 45% |
-| Deep DWT | 2,352 | 5.1s | 13% |
-| Standard | 1,540 | 2.9s | 9% |
+| **UltraHighDim** | **35,672** | **9.1s** | **198%** ✅ |
+| Deep WPD | 9,464 | 2.4s | 53% |
+| Deep DWT | 1,680 | 0.4s | 9% |
+| Standard | 1,200 | 0.2s | 7% |
 
 ## 🧠 Scientific Background
 
 ### Visual Cortex Competition
 - **fMRI Visual Cortex**: ~18,000 voxels
-- **Our Achievement**: 40,418 features (224% coverage)
-- **Information Density**: Sufficient for 64×64 RGB reconstruction
+- **Our Achievement**: 35,672 features (198% coverage)
+- **Information Density**: Sufficient for high-resolution image reconstruction
 
 ### Wavelet Theory
 - **DWT**: Optimal time-frequency localization
@@ -202,13 +203,13 @@ eeg_data = np.array([100, 14, 128])
 
 **Data Transformation**:
 ```
-INPUT:  (100, 14, 128)  ← 3D EEG data
+INPUT:  (100, 14, 128)  ← 3D preprocessed EEG data
          ↓ UltraHighDimExtractor
-OUTPUT: (100, 40418)   ← 2D feature matrix
+OUTPUT: (100, 35672)   ← 2D feature matrix
 ```
 
 ### Output Format
-- **Shape**: (n_samples, 40418+)
+- **Shape**: (n_samples, 35672+)
 - **Type**: numpy.ndarray (float64)
 - **Range**: Normalized features
 - **Quality**: Production-ready
@@ -218,23 +219,24 @@ OUTPUT: (100, 40418)   ← 2D feature matrix
 ```python
 # Custom configuration
 extractor = UltraHighDimExtractor(
-    wavelets=['db8', 'db10', 'coif5', 'bior4.4'],
-    dwt_levels=6,
-    wpd_levels=5,
-    feature_types=['statistical', 'energy', 'entropy', 'spectral'],
-    preprocessing_config={
-        'lowpass_freq': 60.0,
-        'highpass_freq': 0.1,
-        'notch_freq': 50.0
-    }
+    target_dimensions=35000,
+    wavelets=['db4', 'db8', 'coif3'],
+    max_dwt_levels=6,
+    max_wpd_levels=5,
+    feature_types=['statistical', 'energy', 'entropy'],
+    sampling_rate=128.0,
+    optimize_for='image_reconstruction'
 )
+
+# Extract features from preprocessed data
+features = extractor.fit_transform(preprocessed_eeg_data)
 ```
 
 ## 📚 Documentation
 
-- **API Reference**: `docs/api_reference.md`
-- **User Guide**: `docs/user_guide.md`
-- **Performance**: `docs/performance_benchmarks.md`
+- **API Reference**: `docs/API_REFERENCE.md`
+- **User Guide**: `docs/USAGE_GUIDE.md`
+- **Data Format**: `docs/DATA_FORMAT_SPECIFICATION.md`
 
 ## 🤝 Contributing
 
