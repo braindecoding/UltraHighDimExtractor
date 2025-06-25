@@ -65,6 +65,17 @@ UltraHighDimWaveletExtractor/
     └── performance_benchmarks.md
 ```
 
+## ⚠️ Important: Preprocessing Required
+
+**This package works with preprocessed EEG data only.** Before using this extractor, ensure your EEG data is:
+
+- ✅ **Cleaned**: Artifacts removed (eye blinks, muscle artifacts, bad channels)
+- ✅ **Filtered**: Appropriate frequency bands (high-pass, low-pass, notch)
+- ✅ **Normalized**: Scaled/normalized across channels and trials
+- ✅ **Epoched**: Segmented into consistent trial lengths
+
+For detailed preprocessing requirements, see [Data Format Specification](docs/DATA_FORMAT_SPECIFICATION.md).
+
 ## 🚀 Quick Start
 
 ### Installation
@@ -78,23 +89,19 @@ pip install -e .
 ```python
 import numpy as np
 from core.ultra_extractor import UltraHighDimExtractor
-from core.preprocessing import create_optimal_preprocessor
 from utils.validation import validate_eeg_data
 
-# Load your 3D EEG data: (trials, electrodes, timepoints)
-eeg_data = np.load('your_eeg_data.npy')  # Shape: (100, 14, 128)
+# Load your preprocessed 3D EEG data: (trials, electrodes, timepoints)
+# IMPORTANT: Data should already be cleaned, filtered, and normalized
+eeg_data = np.load('your_preprocessed_eeg_data.npy')  # Shape: (100, 14, 128)
 print(f"Input EEG shape: {eeg_data.shape}")
 
 # 1. Validate data format
 validated_data = validate_eeg_data(eeg_data)
 
-# 2. Preprocess for image reconstruction
-preprocessor = create_optimal_preprocessor(task_type='image_reconstruction')
-clean_eeg = preprocessor.fit_transform(validated_data)
-
-# 3. Extract ultra-high dimensional features
+# 2. Extract ultra-high dimensional features
 extractor = UltraHighDimExtractor(target_dimensions=40000)
-features = extractor.fit_transform(clean_eeg)
+features = extractor.fit_transform(validated_data)
 
 print(f"Output features shape: {features.shape}")  # (100, 40418+)
 print(f"Extracted {features.shape[1]:,} features per sample!")

@@ -4,7 +4,13 @@ Basic Usage Example for UltraHighDimWaveletExtractor
 ===================================================
 
 This example demonstrates the basic usage of the UltraHighDimWaveletExtractor
-package for extracting ultra-high dimensional features from EEG data.
+package for extracting ultra-high dimensional features from preprocessed EEG data.
+
+IMPORTANT: This package expects preprocessed EEG data. Make sure your data is:
+- Cleaned (artifacts removed)
+- Filtered (appropriate frequency bands)
+- Normalized/scaled
+- In the correct format: (n_samples, n_channels, n_timepoints)
 
 Usage:
     python basic_usage.py
@@ -19,7 +25,6 @@ import time
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from core.ultra_extractor import UltraHighDimExtractor
-from core.preprocessing import create_optimal_preprocessor
 from utils.validation import validate_eeg_data
 from utils.metrics import FeatureQualityMetrics
 
@@ -66,12 +71,14 @@ def generate_sample_eeg_data():
 
 
 def demo_basic_extraction():
-    """Demonstrate basic feature extraction."""
+    """Demonstrate basic feature extraction from preprocessed EEG data."""
     print("\n" + "="*60)
     print("🚀 BASIC FEATURE EXTRACTION DEMO")
     print("="*60)
+    print("📝 Note: This demo uses simulated preprocessed EEG data")
+    print("   In practice, ensure your data is properly preprocessed!")
 
-    # Generate sample data
+    # Generate sample data (simulating preprocessed data)
     eeg_data = generate_sample_eeg_data()
 
     # Method 1: Quick extraction with defaults
@@ -80,10 +87,8 @@ def demo_basic_extraction():
 
     # Quick extraction implementation
     validated_data = validate_eeg_data(eeg_data)
-    preprocessor = create_optimal_preprocessor()
-    clean_data = preprocessor.fit_transform(validated_data)
     extractor = UltraHighDimExtractor(target_dimensions=20000)
-    features_quick = extractor.fit_transform(clean_data)
+    features_quick = extractor.fit_transform(validated_data)
 
     quick_time = time.time() - start_time
 
@@ -95,25 +100,24 @@ def demo_basic_extraction():
     # Method 2: Step-by-step extraction
     print("\n🔧 Method 2: Step-by-step extraction")
 
-    # Step 1: Preprocessing
-    print("   Step 1: Preprocessing...")
-    preprocessor = create_optimal_preprocessor(task_type='image_reconstruction')
+    # Step 1: Data validation
+    print("   Step 1: Data validation...")
     start_time = time.time()
-    clean_eeg = preprocessor.fit_transform(eeg_data)
-    preprocess_time = time.time() - start_time
-    print(f"   ✅ Preprocessing: {preprocess_time:.2f}s")
+    validated_eeg = validate_eeg_data(eeg_data)
+    validation_time = time.time() - start_time
+    print(f"   ✅ Validation: {validation_time:.2f}s")
 
     # Step 2: Feature extraction
     print("   Step 2: Feature extraction...")
     extractor = UltraHighDimExtractor(target_dimensions=20000)
     start_time = time.time()
-    features_detailed = extractor.fit_transform(clean_eeg)
+    features_detailed = extractor.fit_transform(validated_eeg)
     extract_time = time.time() - start_time
     print(f"   ✅ Extraction: {extract_time:.2f}s")
 
     print(f"\n📊 Step-by-step results:")
     print(f"   Features: {features_detailed.shape[1]:,}")
-    print(f"   Total time: {preprocess_time + extract_time:.2f}s")
+    print(f"   Total time: {validation_time + extract_time:.2f}s")
 
     return features_quick, features_detailed, eeg_data
 
@@ -127,12 +131,10 @@ def demo_feature_validation():
     # Generate data and extract features
     eeg_data = generate_sample_eeg_data()
 
-    # Extract features
+    # Extract features (from preprocessed data)
     validated_data = validate_eeg_data(eeg_data)
-    preprocessor = create_optimal_preprocessor()
-    clean_data = preprocessor.fit_transform(validated_data)
     extractor = UltraHighDimExtractor(target_dimensions=15000)
-    features = extractor.fit_transform(clean_data)
+    features = extractor.fit_transform(validated_data)
 
     # Basic validation
     print("\n🔧 Basic validation...")
@@ -168,12 +170,10 @@ def demo_feature_quality_assessment():
     # Generate data and extract features
     eeg_data = generate_sample_eeg_data()
 
-    # Extract features
+    # Extract features (from preprocessed data)
     validated_data = validate_eeg_data(eeg_data)
-    preprocessor = create_optimal_preprocessor()
-    clean_data = preprocessor.fit_transform(validated_data)
     extractor = UltraHighDimExtractor(target_dimensions=10000)
-    features = extractor.fit_transform(clean_data)
+    features = extractor.fit_transform(validated_data)
 
     # Basic quality assessment
     print("\n🔧 Computing feature quality metrics...")
@@ -254,13 +254,11 @@ def demo_extractor_configuration():
                 wavelets=config['wavelets']
             )
 
-            # Preprocess and extract
+            # Validate and extract
             validated_data = validate_eeg_data(eeg_data)
-            preprocessor = create_optimal_preprocessor()
-            clean_data = preprocessor.fit_transform(validated_data)
 
             start_time = time.time()
-            features = extractor.fit_transform(clean_data)
+            features = extractor.fit_transform(validated_data)
             extraction_time = time.time() - start_time
 
             results[config['name']] = {

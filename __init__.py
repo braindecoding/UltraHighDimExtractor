@@ -28,7 +28,6 @@ __description__ = "Ultra-High Dimensional Wavelet Feature Extraction for EEG-to-
 # Core imports
 try:
     from .core.base import WaveletFeatureBase, WaveletAnalyzer
-    from .core.preprocessing import EEGPreprocessor, create_optimal_preprocessor
     from .utils.validation import validate_eeg_data
     from .utils.metrics import FeatureQualityMetrics
 
@@ -52,20 +51,16 @@ except ImportError as e:
     # Define minimal interface
     WaveletFeatureBase = None
     WaveletAnalyzer = None
-    EEGPreprocessor = None
     UltraHighDimExtractor = None
     ImageReconstructionPipeline = None
     validate_eeg_data = None
     FeatureQualityMetrics = None
-    create_optimal_preprocessor = None
 
 # Version info
 __all__ = [
     # Core classes
     'WaveletFeatureBase',
     'WaveletAnalyzer',
-    'EEGPreprocessor',
-    'create_optimal_preprocessor',
     'UltraHighDimExtractor',
     'DWTExtractor',
     'WPDExtractor',
@@ -106,25 +101,28 @@ def get_config():
     """Get default configuration."""
     return DEFAULT_CONFIG.copy()
 
-def quick_extract(eeg_data, preprocess=True, target_dims=40000):
+def quick_extract(eeg_data, target_dims=40000):
     """
     Quick feature extraction with default settings.
-    
+
     Args:
-        eeg_data: Raw EEG data (n_samples, n_channels, n_timepoints)
-        preprocess: Whether to apply preprocessing
+        eeg_data: Preprocessed EEG data (n_samples, n_channels, n_timepoints)
+                 Data should already be cleaned, filtered, and normalized
         target_dims: Target number of features
-        
+
     Returns:
         np.ndarray: Extracted features (n_samples, n_features)
+
+    Note:
+        This function expects preprocessed EEG data. For preprocessing,
+        use a dedicated EEG preprocessing package before calling this function.
     """
-    if preprocess:
-        preprocessor = EEGPreprocessor.for_image_reconstruction()
-        eeg_data = preprocessor.fit_transform(eeg_data)
-    
+    # Validate input data format
+    validated_data = validate_eeg_data(eeg_data)
+
     extractor = UltraHighDimExtractor(target_dimensions=target_dims)
-    features = extractor.fit_transform(eeg_data)
-    
+    features = extractor.fit_transform(validated_data)
+
     return features
 
 # Package info display

@@ -3,12 +3,17 @@ Image Reconstruction Pipeline
 ============================
 
 This module provides a complete pipeline for EEG-to-image reconstruction
-using ultra-high dimensional wavelet features.
+using ultra-high dimensional wavelet features from preprocessed EEG data.
 
 Classes:
 - ImageReconstructionPipeline: Complete end-to-end pipeline
 - FeatureSelectionPipeline: Feature selection and optimization
 - ReconstructionModel: Image reconstruction model wrapper
+
+Note:
+    This pipeline expects preprocessed EEG data. Use a dedicated EEG
+    preprocessing package to clean, filter, and normalize your data before
+    using this pipeline.
 """
 
 import numpy as np
@@ -17,7 +22,6 @@ import logging
 import time
 import pickle
 
-from .preprocessing import EEGPreprocessor, create_optimal_preprocessor
 from .ultra_extractor import UltraHighDimExtractor
 from ..utils.validation import validate_eeg_data
 from ..utils.metrics import FeatureQualityMetrics
@@ -27,126 +31,115 @@ logger = logging.getLogger(__name__)
 
 class ImageReconstructionPipeline:
     """
-    Complete pipeline for EEG-to-image reconstruction.
-    
-    This pipeline combines preprocessing, feature extraction, feature selection,
+    Complete pipeline for EEG-to-image reconstruction from preprocessed data.
+
+    This pipeline combines feature extraction, feature selection,
     and image reconstruction in a unified interface.
+
+    Note:
+        This pipeline expects preprocessed EEG data. Ensure your data is:
+        - Cleaned (artifacts removed)
+        - Filtered (appropriate frequency bands)
+        - Normalized/scaled
+        - In the correct format: (n_samples, n_channels, n_timepoints)
     """
-    
+
     def __init__(self,
                  target_dimensions: int = 40000,
-                 preprocessing_config: Dict = None,
                  feature_selection: bool = True,
                  model_type: str = 'mlp',
                  **kwargs):
         """
         Initialize image reconstruction pipeline.
-        
+
         Args:
             target_dimensions: Target number of features
-            preprocessing_config: Preprocessing configuration
             feature_selection: Whether to apply feature selection
             model_type: Type of reconstruction model
+            **kwargs: Additional parameters for UltraHighDimExtractor
         """
         self.target_dimensions = target_dimensions
         self.feature_selection = feature_selection
         self.model_type = model_type
-        
+
         # Initialize components
-        self.preprocessor = None
         self.feature_extractor = None
         self.feature_selector = None
         self.reconstruction_model = None
-        
+
         # Pipeline state
         self.is_fitted = False
         self.feature_names = []
         self.pipeline_info = {}
-        
-        # Create preprocessor
-        if preprocessing_config is None:
-            self.preprocessor = create_optimal_preprocessor(task_type='image_reconstruction')
-        else:
-            self.preprocessor = EEGPreprocessor(**preprocessing_config)
-        
+
         # Create feature extractor
         self.feature_extractor = UltraHighDimExtractor(
             target_dimensions=target_dimensions,
             **kwargs
         )
-        
+
         logger.info(f"Initialized ImageReconstructionPipeline with {target_dimensions} target dimensions")
     
     def fit(self, eeg_data: np.ndarray, images: np.ndarray = None) -> 'ImageReconstructionPipeline':
         """
         Fit the complete pipeline.
-        
+
         Args:
-            eeg_data: Raw EEG data (n_samples, n_channels, n_timepoints)
+            eeg_data: Preprocessed EEG data (n_samples, n_channels, n_timepoints)
+                     Data should already be cleaned, filtered, and normalized
             images: Target images (optional, for supervised training)
-            
+
         Returns:
             self: Fitted pipeline
         """
         logger.info("Fitting ImageReconstructionPipeline...")
-        
+
         # Validate input data
         eeg_data = validate_eeg_data(eeg_data)
-        
-        # Step 1: Fit preprocessor
-        logger.info("Step 1: Fitting preprocessor...")
+
+        # Step 1: Fit feature extractor
+        logger.info("Step 1: Fitting feature extractor...")
         start_time = time.time()
-        self.preprocessor.fit(eeg_data)
-        preprocess_time = time.time() - start_time
-        logger.info(f"Preprocessor fitted in {preprocess_time:.2f}s")
-        
-        # Step 2: Apply preprocessing
-        logger.info("Step 2: Applying preprocessing...")
-        start_time = time.time()
-        clean_eeg = self.preprocessor.transform(eeg_data)
-        transform_time = time.time() - start_time
-        logger.info(f"Preprocessing applied in {transform_time:.2f}s")
-        
-        # Step 3: Fit feature extractor
-        logger.info("Step 3: Fitting feature extractor...")
-        start_time = time.time()
-        self.feature_extractor.fit(clean_eeg)
+        self.feature_extractor.fit(eeg_data)
         fit_time = time.time() - start_time
         logger.info(f"Feature extractor fitted in {fit_time:.2f}s")
-        
-        # Step 4: Extract features
-        logger.info("Step 4: Extracting features...")
+
+        # Step 2: Extract features
+        logger.info("Step 2: Extracting features...")
         start_time = time.time()
-        features = self.feature_extractor.transform(clean_eeg)
+        features = self.feature_extractor.transform(eeg_data)
         extract_time = time.time() - start_time
         logger.info(f"Features extracted in {extract_time:.2f}s")
         logger.info(f"Extracted {features.shape[1]} features")
         
-        # Step 5: Feature selection (optional)
+        # Step 3: Feature selection (optional)
+        selection_time = 0
         if self.feature_selection:
-            logger.info("Step 5: Applying feature selection...")
+            logger.info("Step 3: Applying feature selection...")
             start_time = time.time()
-            features, selected_indices = self._apply_feature_selection(features)
+            features, _ = self._apply_feature_selection(features)
             selection_time = time.time() - start_time
             logger.info(f"Feature selection completed in {selection_time:.2f}s")
             logger.info(f"Selected {features.shape[1]} features")
-        
-        # Step 6: Train reconstruction model (if images provided)
+
+        # Step 4: Train reconstruction model (if images provided)
+        train_time = 0
         if images is not None:
-            logger.info("Step 6: Training reconstruction model...")
+            logger.info("Step 4: Training reconstruction model...")
             start_time = time.time()
             self._train_reconstruction_model(features, images)
             train_time = time.time() - start_time
             logger.info(f"Reconstruction model trained in {train_time:.2f}s")
-        
+
         # Store pipeline info
         self.pipeline_info = {
             'n_samples': eeg_data.shape[0],
             'n_features_extracted': self.feature_extractor.n_features,
             'n_features_selected': features.shape[1] if self.feature_selection else self.feature_extractor.n_features,
-            'preprocessing_time': preprocess_time,
             'extraction_time': extract_time,
-            'total_time': preprocess_time + transform_time + fit_time + extract_time
+            'selection_time': selection_time,
+            'training_time': train_time,
+            'total_time': fit_time + extract_time + selection_time + train_time
         }
         
         self.is_fitted = True
@@ -156,30 +149,27 @@ class ImageReconstructionPipeline:
     
     def extract_features(self, eeg_data: np.ndarray) -> np.ndarray:
         """
-        Extract features from EEG data.
-        
+        Extract features from preprocessed EEG data.
+
         Args:
-            eeg_data: Raw EEG data
-            
+            eeg_data: Preprocessed EEG data (n_samples, n_channels, n_timepoints)
+
         Returns:
             np.ndarray: Extracted features
         """
         if not self.is_fitted:
             raise ValueError("Pipeline must be fitted before feature extraction")
-        
+
         # Validate input
         eeg_data = validate_eeg_data(eeg_data)
-        
-        # Apply preprocessing
-        clean_eeg = self.preprocessor.transform(eeg_data)
-        
+
         # Extract features
-        features = self.feature_extractor.transform(clean_eeg)
-        
+        features = self.feature_extractor.transform(eeg_data)
+
         # Apply feature selection if fitted
         if self.feature_selection and self.feature_selector is not None:
             features = self.feature_selector.transform(features)
-        
+
         return features
     
     def reconstruct_images(self, eeg_data: np.ndarray) -> np.ndarray:

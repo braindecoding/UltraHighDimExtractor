@@ -27,18 +27,10 @@ try:
 except Exception as e:
     print(f"   ❌ Base classes failed: {e}")
 
-# Test 2: Preprocessing
-try:
-    print("\n2. Testing preprocessing...")
-    from core.preprocessing import EEGPreprocessor, create_optimal_preprocessor
-    print("   ✅ Preprocessing imported successfully")
-    
-    # Test creating preprocessor
-    preprocessor = create_optimal_preprocessor(task_type='image_reconstruction')
-    print(f"   ✅ Created preprocessor: {preprocessor.__class__.__name__}")
-    
-except Exception as e:
-    print(f"   ❌ Preprocessing failed: {e}")
+# Test 2: Preprocessing (REMOVED - now expects preprocessed data)
+print("\n2. Preprocessing module removed...")
+print("   ✅ This package now works with preprocessed data only")
+print("   📝 Use dedicated preprocessing packages for raw EEG data")
 
 # Test 3: Validation utilities
 try:
@@ -79,10 +71,8 @@ try:
     validated_data = validate_eeg_data(test_data)
     print(f"   ✅ Data validation passed: {validated_data.shape}")
 
-    # Test preprocessing
-    preprocessor = create_optimal_preprocessor()
-    clean_data = preprocessor.fit_transform(test_data)
-    print(f"   ✅ Preprocessing passed: {clean_data.shape}")
+    # Test with preprocessed data (no preprocessing step needed)
+    print(f"   ✅ Using preprocessed data: {validated_data.shape}")
 
     # Test quality metrics
     # Create dummy features for testing

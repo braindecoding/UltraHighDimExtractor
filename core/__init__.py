@@ -17,7 +17,6 @@ Modules:
 # Import only working modules for now
 try:
     from .base import WaveletFeatureBase, FeatureExtractorInterface, WaveletAnalyzer
-    from .preprocessing import EEGPreprocessor, create_optimal_preprocessor
 
     # These will be imported later after fixing dependencies
     # from .dwt_extractor import DWTExtractor

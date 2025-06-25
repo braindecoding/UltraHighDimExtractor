@@ -74,17 +74,16 @@ except Exception as e:
 # Test 4: Feature extraction
 try:
     print("\n4. Testing feature extraction...")
-    
-    # Preprocess data first
-    from core.preprocessing import create_optimal_preprocessor
-    preprocessor = create_optimal_preprocessor(task_type='image_reconstruction')
-    clean_data = preprocessor.fit_transform(test_data)
-    print(f"   ✅ Data preprocessed: {clean_data.shape}")
-    
+
+    # Use preprocessed data directly (no preprocessing step)
+    from utils.validation import validate_eeg_data
+    validated_data = validate_eeg_data(test_data)
+    print(f"   ✅ Data validated: {validated_data.shape}")
+
     # Extract features
     print("   Extracting ultra-high dimensional features...")
     start_time = time.time()
-    features = extractor.fit_transform(clean_data)
+    features = extractor.fit_transform(validated_data)
     extraction_time = time.time() - start_time
     
     print(f"   ✅ Feature extraction completed!")

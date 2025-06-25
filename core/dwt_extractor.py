@@ -16,7 +16,7 @@ import pywt
 from typing import List, Dict, Tuple, Optional
 import logging
 
-from wavelet_base import WaveletFeatureBase, WaveletAnalyzer
+from .wavelet_base import WaveletFeatureBase, WaveletAnalyzer
 
 logger = logging.getLogger(__name__)
 

@@ -22,17 +22,12 @@ logger = logging.getLogger(__name__)
 
 from .base import WaveletFeatureBase
 
-# Import from waveletfeatures folder temporarily
-import sys
-import os
-waveletfeatures_path = os.path.join(os.path.dirname(__file__), '..', '..', 'waveletfeatures')
-if waveletfeatures_path not in sys.path:
-    sys.path.append(waveletfeatures_path)
-
+# Import DWT and WPD extractors from core
 try:
-    from dwt_features import DWTFeatureExtractor as DWTExtractor
-    from wpd_features import WPDFeatureExtractor as WPDExtractor
+    from .dwt_extractor import DWTFeatureExtractor as DWTExtractor
+    from .wpd_extractor import WPDFeatureExtractor as WPDExtractor
     EXTRACTORS_AVAILABLE = True
+    logger.info("DWT and WPD extractors loaded successfully")
 except ImportError as e:
     logger.warning(f"Could not import extractors: {e}")
     DWTExtractor = None
